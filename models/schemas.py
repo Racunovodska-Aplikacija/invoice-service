@@ -14,27 +14,33 @@ class InvoiceStatus(str, Enum):
 
 # Invoice Line Schemas
 class InvoiceLineBase(BaseModel):
-    description: str
-    quantity: int
-    unit_price: Decimal
+    product_id: UUID
+    amount: int
 
 
 class InvoiceLineCreate(InvoiceLineBase):
     pass
 
 
-class InvoiceLineResponse(InvoiceLineBase):
+class InvoiceLineResponse(BaseModel):
     id: UUID
     invoice_id: UUID
+    product_id: UUID
+    amount: int
+    description: str
+    unit_price: Decimal
     line_total: Decimal
 
     class Config:
-        from_attributes = True
+        from_attributes = False
 
 
 # Invoice Schemas
 class InvoiceBase(BaseModel):
-    customer_id: UUID
+    partner_id: UUID
+    company_id: UUID
+    user_id: UUID
+    comment: Optional[str] = None
     issue_date: datetime
     due_date: datetime
 
@@ -54,13 +60,15 @@ class InvoiceResponse(InvoiceBase):
     lines: List[InvoiceLineResponse]
 
     class Config:
-        from_attributes = True
+        from_attributes = False
 
 
 class InvoiceListResponse(BaseModel):
     id: UUID
     invoice_number: str
-    customer_id: UUID
+    partner_id: UUID
+    company_id: UUID
+    user_id: UUID
     issue_date: datetime
     due_date: datetime
     status: InvoiceStatus
@@ -68,7 +76,7 @@ class InvoiceListResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        from_attributes = True
+        from_attributes = False
 
 
 class StatusUpdate(BaseModel):

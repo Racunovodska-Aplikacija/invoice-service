@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from enum import Enum as PyEnum
-from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, Enum, Integer
+from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, Enum, Integer, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, declarative_base
 
@@ -19,7 +19,10 @@ class Invoice(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     invoice_number = Column(String, unique=True, nullable=False)
-    customer_id = Column(UUID(as_uuid=True), nullable=False)
+    partner_id = Column(UUID(as_uuid=True), nullable=False)
+    company_id = Column(UUID(as_uuid=True), nullable=False)
+    user_id = Column(UUID(as_uuid=True), nullable=False)
+    comment = Column(Text, nullable=True)
     issue_date = Column(DateTime, nullable=False)
     due_date = Column(DateTime, nullable=False)
     status = Column(Enum(InvoiceStatus), default=InvoiceStatus.ISSUED, nullable=False)
@@ -36,10 +39,8 @@ class InvoiceLine(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=False)
-    description = Column(String, nullable=False)
-    quantity = Column(Integer, nullable=False)
-    unit_price = Column(Numeric(10, 2), nullable=False)
-    line_total = Column(Numeric(10, 2), nullable=False)
+    product_id = Column(UUID(as_uuid=True), nullable=False)
+    amount = Column(Integer, nullable=False)
 
     invoice = relationship("Invoice", back_populates="lines")
 
