@@ -21,13 +21,13 @@ class Invoice(Base):
     invoice_number = Column(String, unique=True, nullable=False)
     partner_id = Column(UUID(as_uuid=True), nullable=False)
     company_id = Column(UUID(as_uuid=True), nullable=False)
+    partner_name = Column(String, nullable=False)
+    company_name = Column(String, nullable=False)
     user_id = Column(UUID(as_uuid=True), nullable=False)
     comment = Column(Text, nullable=True)
     issue_date = Column(DateTime, nullable=False)
     due_date = Column(DateTime, nullable=False)
     status = Column(Enum(InvoiceStatus), default=InvoiceStatus.ISSUED, nullable=False)
-    subtotal = Column(Numeric(10, 2), nullable=False)
-    tax_total = Column(Numeric(10, 2), nullable=False)
     total = Column(Numeric(10, 2), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
@@ -41,6 +41,8 @@ class InvoiceLine(Base):
     invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=False)
     product_id = Column(UUID(as_uuid=True), nullable=False)
     amount = Column(Integer, nullable=False)
+    description = Column(String, nullable=False)
+    unit_price = Column(Numeric(10, 2), nullable=False)
 
     invoice = relationship("Invoice", back_populates="lines")
 

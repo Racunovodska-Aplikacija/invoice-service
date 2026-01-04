@@ -19,7 +19,8 @@ class InvoiceLineBase(BaseModel):
 
 
 class InvoiceLineCreate(InvoiceLineBase):
-    pass
+    description: str
+    unit_price: Decimal
 
 
 class InvoiceLineResponse(BaseModel):
@@ -39,6 +40,8 @@ class InvoiceLineResponse(BaseModel):
 class InvoiceBase(BaseModel):
     partner_id: UUID
     company_id: UUID
+    partner_name: str
+    company_name: str
     user_id: UUID
     comment: Optional[str] = None
     issue_date: datetime
@@ -46,6 +49,7 @@ class InvoiceBase(BaseModel):
 
 
 class InvoiceCreate(InvoiceBase):
+    total: Decimal
     lines: List[InvoiceLineCreate]
 
 
@@ -53,8 +57,6 @@ class InvoiceResponse(InvoiceBase):
     id: UUID
     invoice_number: str
     status: InvoiceStatus
-    subtotal: Decimal
-    tax_total: Decimal
     total: Decimal
     created_at: datetime
     lines: List[InvoiceLineResponse]
@@ -68,6 +70,8 @@ class InvoiceListResponse(BaseModel):
     invoice_number: str
     partner_id: UUID
     company_id: UUID
+    partner_name: str
+    company_name: str
     user_id: UUID
     issue_date: datetime
     due_date: datetime

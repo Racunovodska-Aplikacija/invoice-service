@@ -5,45 +5,35 @@ from sqlalchemy.orm import Session
 from models.database import Invoice, InvoiceLine, InvoiceStatus
 from models.schemas import InvoiceCreate, InvoiceLineResponse, InvoiceResponse, InvoiceListResponse, StatusUpdate
 from repository.invoice_repo import InvoiceRepository
-from client.product_client import ProductClient, ProductClientNotFound, ProductClientError
-
-
-TAX_RATE = Decimal("0.22")  # 22% tax
 
 
 class InvoiceService:
     def __init__(self, db: Session):
         self.repo = InvoiceRepository(db)
-        self.products = ProductClient()
 
     def create_invoice(self, data: InvoiceCreate) -> Invoice:
-        # Calculate totals by looking up product prices
-        subtotal = Decimal("0")
+        # Totals are provided by the caller; invoice-service does not call external product APIs.
         lines = []
         for line_data in data.lines:
-            product = self.products.get_product(line_data.product_id)
-            line_total = Decimal(line_data.amount) * product.price
-            subtotal += line_total
             lines.append(InvoiceLine(
                 product_id=line_data.product_id,
                 amount=line_data.amount,
+                description=line_data.description,
+                unit_price=line_data.unit_price,
             ))
-
-        tax_total = subtotal * TAX_RATE
-        total = subtotal + tax_total
 
         invoice = Invoice(
             invoice_number=self.repo.get_next_invoice_number(),
             partner_id=data.partner_id,
             company_id=data.company_id,
+            partner_name=data.partner_name,
+            company_name=data.company_name,
             user_id=data.user_id,
             comment=data.comment,
             issue_date=data.issue_date,
             due_date=data.due_date,
             status=InvoiceStatus.ISSUED,
-            subtotal=subtotal,
-            tax_total=tax_total,
-            total=total,
+            total=data.total,
             lines=lines
         )
 
@@ -77,6 +67,8 @@ class InvoiceService:
                 invoice_number=inv.invoice_number,
                 partner_id=inv.partner_id,
                 company_id=inv.company_id,
+                partner_name=inv.partner_name,
+                company_name=inv.company_name,
                 user_id=inv.user_id,
                 issue_date=inv.issue_date,
                 due_date=inv.due_date,
@@ -88,11 +80,10 @@ class InvoiceService:
         ]
 
     def _to_invoice_response(self, invoice: Invoice) -> InvoiceResponse:
-        # Enrich lines for consumers (PDF/UI): include product name and price + calculated totals
+        # Build line responses from stored snapshot data (no product-service calls).
         line_responses: list[InvoiceLineResponse] = []
         for line in invoice.lines:
-            product = self.products.get_product(line.product_id)
-            unit_price = product.price
+            unit_price = Decimal(str(line.unit_price))
             line_total = Decimal(line.amount) * unit_price
             line_responses.append(
                 InvoiceLineResponse(
@@ -100,7 +91,7 @@ class InvoiceService:
                     invoice_id=line.invoice_id,
                     product_id=line.product_id,
                     amount=line.amount,
-                    description=product.name,
+                    description=line.description,
                     unit_price=unit_price,
                     line_total=line_total,
                 )
@@ -111,13 +102,13 @@ class InvoiceService:
             invoice_number=invoice.invoice_number,
             partner_id=invoice.partner_id,
             company_id=invoice.company_id,
+            partner_name=invoice.partner_name,
+            company_name=invoice.company_name,
             user_id=invoice.user_id,
             comment=invoice.comment,
             issue_date=invoice.issue_date,
             due_date=invoice.due_date,
             status=invoice.status,
-            subtotal=Decimal(str(invoice.subtotal)),
-            tax_total=Decimal(str(invoice.tax_total)),
             total=Decimal(str(invoice.total)),
             created_at=invoice.created_at,
             lines=line_responses,
