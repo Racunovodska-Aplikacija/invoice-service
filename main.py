@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from config import engine
-from models.database import Base
+from fastapi.middleware.cors import CORSMiddleware
+from config import initialize_database
 from api.routes import router
 
 app = FastAPI(
@@ -9,8 +9,19 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Create tables on startup
-Base.metadata.create_all(bind=engine)
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize database on startup
+@app.on_event("startup")
+async def startup_event():
+    initialize_database()
 
 # Include routers
 app.include_router(router)

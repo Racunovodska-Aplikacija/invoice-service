@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package product;
+
+message GetProductResponse {
+  string id = 1;
+  string companyId = 2;
+  string name = 3;
+  string cost = 4;
+  string measuringUnit = 5;
+  string ddvPercentage = 6;
+  string createdAt = 7;
+  string updatedAt = 8;
+}
+
+message GetProductsRequest {
+  repeated string ids = 1;
+}
+
+message GetProductsResponse {
+  repeated GetProductResponse products = 1;
+}
+
+service ProductService {
+  rpc GetProducts(GetProductsRequest) returns (GetProductsResponse);
+}

@@ -30,6 +30,18 @@ RUN python -m pip install --upgrade pip \
 
 COPY . .
 
+# Generate gRPC Python code from proto files
+RUN python -m grpc_tools.protoc \
+    -I./protos \
+    --python_out=./client \
+    --grpc_python_out=./client \
+    ./protos/company.proto \
+    ./protos/partner.proto \
+    ./protos/product.proto
+
+# Fix imports in generated gRPC files
+RUN python fix_grpc_imports.py
+
 # Run as non-root
 RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser

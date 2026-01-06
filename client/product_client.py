@@ -1,57 +1,55 @@
 import os
-from dataclasses import dataclass
-from decimal import Decimal
-from uuid import UUID
-
-import requests
-
-
-class ProductClientError(Exception):
-    pass
-
-
-class ProductClientNotFound(ProductClientError):
-    pass
-
-
-@dataclass(frozen=True)
-class Product:
-    id: UUID
-    name: str
-    price: Decimal
+import grpc
+from typing import List, Optional
+from . import product_pb2, product_pb2_grpc
 
 
 class ProductClient:
     def __init__(self):
-        self.base_url = os.getenv("PRODUCT_SERVICE_URL", "http://localhost:8002").rstrip("/")
-        try:
-            self.timeout_seconds = float(os.getenv("HTTP_TIMEOUT_SECONDS", "5"))
-        except ValueError:
-            self.timeout_seconds = 5.0
+        self.host = os.getenv("COMPANY_SERVICE_HOST", "company-service")
+        self.port = os.getenv("COMPANY_SERVICE_GRPC_PORT", "50051")
+        self.channel = grpc.insecure_channel(f"{self.host}:{self.port}")
+        self.stub = product_pb2_grpc.ProductServiceStub(self.channel)
 
-    def get_product(self, product_id: UUID) -> Product:
-        url = f"{self.base_url}/products/{product_id}"
+    def get_products(self, product_ids: List[str]) -> List[dict]:
+        """Get multiple products by IDs via gRPC"""
         try:
-            resp = requests.get(url, timeout=self.timeout_seconds)
-        except requests.RequestException as e:
-            raise ProductClientError(str(e)) from e
+            request = product_pb2.GetProductsRequest(ids=product_ids)
+            response = self.stub.GetProducts(request, timeout=5)
+            
+            products = []
+            for product in response.products:
+                products.append({
+                    "id": product.id,
+                    "companyId": product.companyId,
+                    "name": product.name,
+                    "cost": product.cost,
+                    "measuringUnit": product.measuringUnit,
+                    "ddvPercentage": product.ddvPercentage,
+                })
+            return products
+        except grpc.RpcError as e:
+            print(f"gRPC error getting products: {e}")
+            return []
+        except Exception as e:
+            print(f"Error getting products: {e}")
+            return []
 
-        if resp.status_code == 404:
-            raise ProductClientNotFound()
-        if resp.status_code >= 400:
-            raise ProductClientError(f"product-service error: {resp.status_code}")
+    def close(self):
+        """Close the gRPC channel"""
+        if self.channel:
+            self.channel.close()
 
         try:
-            data = resp.json()
-        except ValueError as e:
-            raise ProductClientError("invalid JSON from product-service") from e
-
-        try:
-            raw_price = data["price"]
+            raw_price = data["cost"]
+            raw_ddv = data.get("ddvPercentage", "22")
+            measuring_unit = data.get("measuringUnit", "")
             return Product(
                 id=UUID(str(data["id"])),
                 name=str(data["name"]),
                 price=Decimal(str(raw_price)),
+                measuring_unit=str(measuring_unit),
+                ddv_percentage=Decimal(str(raw_ddv)),
             )
         except Exception as e:
             raise ProductClientError("unexpected product shape from product-service") from e

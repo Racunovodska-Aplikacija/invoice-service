@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package partner;
+
+message GetPartnerRequest {
+  string id = 1;
+}
+
+message GetPartnerResponse {
+  string id = 1;
+  string userId = 2;
+  string naziv = 3;
+  string ulica = 4;
+  string kraj = 5;
+  string postnaSt = 6;
+  string poljubenNaslov = 7;
+  bool ddvZavezanec = 8;
+  string davcnaSt = 9;
+  int32 rokPlacila = 10;
+  string telefon = 11;
+  string ePosta = 12;
+  string spletnastran = 13;
+  string opombe = 14;
+  string eRacunNaslov = 15;
+  string eRacunId = 16;
+  string createdAt = 17;
+  string updatedAt = 18;
+}
+
+service PartnerService {
+  rpc GetPartner(GetPartnerRequest) returns (GetPartnerResponse);
+}

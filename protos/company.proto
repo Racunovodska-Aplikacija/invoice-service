@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package company;
+
+// Request message for getting a company by ID
+message GetCompanyRequest {
+  string id = 1;
+}
+
+// Response message containing company data
+message GetCompanyResponse {
+  string id = 1;
+  string userId = 2;
+  string companyName = 3;
+  string street = 4;
+  string streetAdditional = 5;
+  string postalCode = 6;
+  string city = 7;
+  string iban = 8;
+  string bic = 9;
+  string registrationNumber = 10;
+  bool vatPayer = 11;
+  string vatId = 12;
+  string additionalInfo = 13;
+  string documentLocation = 14;
+  bool reverseCharge = 15;
+  string createdAt = 16;
+  string updatedAt = 17;
+}
+
+// Company service definition
+service CompanyService {
+  rpc GetCompany(GetCompanyRequest) returns (GetCompanyResponse);
+}

@@ -14,19 +14,33 @@ class InvoiceRepository:
         self.db.refresh(invoice)
         return invoice
 
-    def get_by_id(self, invoice_id: UUID) -> Optional[Invoice]:
-        return self.db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    def get_by_id(self, invoice_id: UUID, user_id: str = None) -> Optional[Invoice]:
+        query = self.db.query(Invoice).filter(Invoice.id == invoice_id)
+        if user_id:
+            query = query.filter(Invoice.user_id == user_id)
+        return query.first()
 
-    def get_all(self) -> List[Invoice]:
-        return self.db.query(Invoice).order_by(Invoice.created_at.desc()).all()
+    def get_all(self, user_id: str = None) -> List[Invoice]:
+        query = self.db.query(Invoice)
+        if user_id:
+            query = query.filter(Invoice.user_id == user_id)
+        return query.order_by(Invoice.issue_date.desc()).all()
 
-    def update_status(self, invoice_id: UUID, status: InvoiceStatus) -> Optional[Invoice]:
-        invoice = self.get_by_id(invoice_id)
-        if invoice:
-            invoice.status = status
-            self.db.commit()
-            self.db.refresh(invoice)
+    def update(self, invoice: Invoice) -> Invoice:
+        self.db.commit()
+        self.db.refresh(invoice)
         return invoice
+
+    def delete(self, invoice_id: UUID, user_id: str = None) -> bool:
+        query = self.db.query(Invoice).filter(Invoice.id == invoice_id)
+        if user_id:
+            query = query.filter(Invoice.user_id == user_id)
+        invoice = query.first()
+        if invoice:
+            self.db.delete(invoice)
+            self.db.commit()
+            return True
+        return False
 
     def get_next_invoice_number(self) -> str:
         count = self.db.query(Invoice).count()

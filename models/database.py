@@ -18,18 +18,18 @@ class Invoice(Base):
     __tablename__ = "invoices"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    invoice_number = Column(String, unique=True, nullable=False)
-    partner_id = Column(UUID(as_uuid=True), nullable=False)
-    company_id = Column(UUID(as_uuid=True), nullable=False)
-    partner_name = Column(String, nullable=False)
-    company_name = Column(String, nullable=False)
     user_id = Column(UUID(as_uuid=True), nullable=False)
-    comment = Column(Text, nullable=True)
+    company_id = Column(UUID(as_uuid=True), nullable=False)
+    partner_id = Column(UUID(as_uuid=True), nullable=False)
+    invoice_number = Column(String, unique=True, nullable=False)
     issue_date = Column(DateTime, nullable=False)
+    service_date = Column(DateTime, nullable=False)
     due_date = Column(DateTime, nullable=False)
+    notes = Column(Text, nullable=True)
     status = Column(Enum(InvoiceStatus), default=InvoiceStatus.ISSUED, nullable=False)
-    total = Column(Numeric(10, 2), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    company_name = Column(String, nullable=True)  # Snapshot for list display
+    partner_name = Column(String, nullable=True)  # Snapshot for list display
+    total = Column(Numeric(10, 2), nullable=True)  # Snapshot for list display
 
     lines = relationship("InvoiceLine", back_populates="invoice", cascade="all, delete-orphan")
 
@@ -41,8 +41,6 @@ class InvoiceLine(Base):
     invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=False)
     product_id = Column(UUID(as_uuid=True), nullable=False)
     amount = Column(Integer, nullable=False)
-    description = Column(String, nullable=False)
-    unit_price = Column(Numeric(10, 2), nullable=False)
 
     invoice = relationship("Invoice", back_populates="lines")
 
