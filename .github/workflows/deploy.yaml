@@ -1,0 +1,62 @@
+name: Build & Deploy Invoice Service
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: vidkal/invoice-service
+  DEPLOYMENT_NAME: invoice-service
+  NAMESPACE: rac-app
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Debug variables
+        run: |
+          echo "Deployment: $DEPLOYMENT_NAME"
+          echo "Namespace: $NAMESPACE"
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t $IMAGE_NAME:latest .
+          docker push $IMAGE_NAME:latest
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Set up kubeconfig
+        run: |
+          echo "${{ secrets.KUBE_CONFIG }}" | tr -d '\n' | base64 -d > kubeconfig
+          chmod 600 kubeconfig
+
+      - name: Verify cluster access
+        run: |
+          kubectl --kubeconfig=kubeconfig get deployments -n $NAMESPACE
+
+      - name: Wait for deployment to exist
+        run: |
+          DEPLOYMENT_NAME=${{ env.DEPLOYMENT_NAME }}
+          NAMESPACE=${{ env.NAMESPACE }}
+          echo "Waiting for deployment $DEPLOYMENT_NAME in $NAMESPACE"
+          for i in {1..10}; do
+            kubectl --kubeconfig=kubeconfig get deployment/$DEPLOYMENT_NAME -n $NAMESPACE && break
+            echo "Deployment not ready yet... retrying in 5s"
+            sleep 5
+          done
+
+      - name: Restart deployment
+        run: |
+          kubectl --kubeconfig=kubeconfig rollout restart deployment/${{ env.DEPLOYMENT_NAME }} -n ${{ env.NAMESPACE }}
