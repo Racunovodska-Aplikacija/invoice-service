@@ -21,7 +21,7 @@ class Invoice(Base):
     user_id = Column(UUID(as_uuid=True), nullable=False)
     company_id = Column(UUID(as_uuid=True), nullable=False)
     partner_id = Column(UUID(as_uuid=True), nullable=False)
-    invoice_number = Column(String, unique=True, nullable=False)
+    invoice_number = Column(String, unique=False, nullable=False)
     issue_date = Column(DateTime, nullable=False)
     service_date = Column(DateTime, nullable=False)
     due_date = Column(DateTime, nullable=False)
