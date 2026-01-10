@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 from config import initialize_database
 from api.routes import router
 
@@ -30,6 +31,9 @@ async def startup_event():
 
 # Include routers
 app.include_router(router)
+
+# Prometheus metrics (cluster-internal scraping; do NOT expose via Kong Ingress)
+Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
 
 @app.get("/health")

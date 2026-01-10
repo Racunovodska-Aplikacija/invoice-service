@@ -7,5 +7,6 @@ requests==2.31.0
 alembic==1.13.1
 grpcio==1.60.0
 grpcio-tools==1.60.0
+prometheus-fastapi-instrumentator==6.1.0
 pytest==8.2.2
 
