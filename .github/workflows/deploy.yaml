@@ -11,7 +11,41 @@ env:
   NAMESPACE: rac-app
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate gRPC stubs
+        run: |
+          python -m grpc_tools.protoc \
+            -I./protos \
+            --python_out=./client \
+            --grpc_python_out=./client \
+            ./protos/company.proto \
+            ./protos/partner.proto \
+            ./protos/product.proto
+          python fix_grpc_imports.py
+
+      - name: Run tests
+        run: |
+          python -m pytest -q
+
   build-and-deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:

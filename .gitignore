@@ -140,3 +140,11 @@ migrations/versions/__pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Tests
+client/company_pb2.py
+client/company_pb2_grpc.py
+client/partner_pb2.py
+client/partner_pb2_grpc.py
+client/product_pb2.py
+client/product_pb2_grpc.py
