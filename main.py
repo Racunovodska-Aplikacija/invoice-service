@@ -6,7 +6,12 @@ from api.routes import router
 app = FastAPI(
     title="Invoice Service",
     description="Microservice for invoice management",
-    version="1.0.0"
+    version="1.0.0",
+    # Serve docs/OpenAPI under the same /invoices prefix that Kong routes to this service.
+    # This avoids needing a separate Ingress rule for /docs and /openapi.json.
+    docs_url="/invoices/docs",
+    redoc_url="/invoices/redoc",
+    openapi_url="/invoices/openapi.json",
 )
 
 # Add CORS middleware
